@@ -61,9 +61,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   preBuild = ''
     sed -i "s/+UNKNOWN/_$(date '+%F')/" version.inc || true
-  '';
-
-  postUnpack = ''
+    # Boost component cmake config dosyalarının bulunduğu path'i ekle
     export CMAKE_PREFIX_PATH="${boost}/lib/cmake:$CMAKE_PREFIX_PATH"
   '';
 
