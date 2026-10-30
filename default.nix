@@ -19,7 +19,6 @@
 , openvdb
 , dbus
 , wxWidgets_3_2
-, libsystemd
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -48,7 +47,6 @@ stdenv.mkDerivation (finalAttrs: {
     openvdb
     dbus
     wxWidgets_3_2
-    libsystemd
   ];
 
   cmakeFlags = [
