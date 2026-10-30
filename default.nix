@@ -3,10 +3,9 @@
 , cmake
 , ninja
 , pkg-config
-# Source (passed from flake via callPackage, or defaults to fetchFromGitHub)
 , src
-# System libraries — all required by find_package in CMakeLists.txt
-, boost
+# Build tools
+, boost1_84_0
 , tbb
 , openssl
 , curl
@@ -20,7 +19,9 @@
 , nlopt
 , openvdb
 , dbus
-, wxGTK32
+, wxWidgets_3_2
+, libsystemd
+, xorg
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -34,7 +35,7 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   buildInputs = [
-    boost
+    boost1_84_0
     tbb
     openssl
     curl
@@ -48,7 +49,22 @@ stdenv.mkDerivation (finalAttrs: {
     nlopt
     openvdb
     dbus
-    wxGTK32
+    wxWidgets_3_2
+    libsystemd
+    xorg.libX11
+    xorg.libXrandr
+    xorg.libXi
+    xorg.libXrender
+    xorg.libXext
+    xorg.libxcb
+    xorg.libXcursor
+    xorg.libXdamage
+    xorg.libXfixes
+    xorg.libXcomposite
+    atk
+    pango
+    cairo
+    fontconfig
   ];
 
   cmakeFlags = [

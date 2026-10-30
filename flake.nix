@@ -16,7 +16,7 @@
           owner = "ANYCUBIC-3D";
           repo = "AnycubicSlicerNext";
           rev = "6103ed8b511609658d00d0538cc7f0609cdb57da";
-          hash = "sha256-1sgfhxr8rhp9mzknw9qccc73vna2wiaaly4y3mjgldm7i0if6ifj";
+          hash = "sha256-SENİN-HASHIN";
         };
       };
     in {
