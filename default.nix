@@ -18,7 +18,7 @@
 , nlopt
 , openvdb
 , dbus
-, wxWidgets_3_2
+, wxwidgets_3_2
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -46,7 +46,7 @@ stdenv.mkDerivation (finalAttrs: {
     nlopt
     openvdb
     dbus
-    wxWidgets_3_2
+    wxwidgets_3_2
   ];
 
   cmakeFlags = [
