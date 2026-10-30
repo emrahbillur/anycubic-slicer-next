@@ -4,7 +4,6 @@
 , ninja
 , pkg-config
 , src
-# Build tools
 , boost1_84_0
 , tbb
 , openssl
@@ -21,7 +20,6 @@
 , dbus
 , wxWidgets_3_2
 , libsystemd
-, xorg
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -51,20 +49,6 @@ stdenv.mkDerivation (finalAttrs: {
     dbus
     wxWidgets_3_2
     libsystemd
-    xorg.libX11
-    xorg.libXrandr
-    xorg.libXi
-    xorg.libXrender
-    xorg.libXext
-    xorg.libxcb
-    xorg.libXcursor
-    xorg.libXdamage
-    xorg.libXfixes
-    xorg.libXcomposite
-    atk
-    pango
-    cairo
-    fontconfig
   ];
 
   cmakeFlags = [
