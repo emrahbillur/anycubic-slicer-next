@@ -19,7 +19,7 @@
 , openvdb
 , dbus
 , wxwidgets_3_2
-, systemd-libs
+, systemdLibs
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -48,7 +48,7 @@ stdenv.mkDerivation (finalAttrs: {
     openvdb
     dbus
     wxwidgets_3_2
-    systemd-libs
+    systemdLibs
   ];
 
   cmakeFlags = [
@@ -63,9 +63,7 @@ stdenv.mkDerivation (finalAttrs: {
     sed -i "s/+UNKNOWN/_$(date '+%F')/" version.inc || true
   '';
 
-  # Boost component cmake config'leri CMAKE_PREFIX_PATH'te görünür olsun
   postUnpack = ''
-    # boost lib/cmake path'ini CMAKE_PREFIX_PATH'e ekle
     export CMAKE_PREFIX_PATH="${boost}/lib/cmake:$CMAKE_PREFIX_PATH"
   '';
 
@@ -77,8 +75,7 @@ stdenv.mkDerivation (finalAttrs: {
       -DCMAKE_INSTALL_PREFIX="$out" \
       -DCMAKE_BUILD_TYPE=Release \
       -DSLIC3R_STATIC=1 \
-      -DSLIC3R_GUI=1 \
-      -DSLIC3R_PCH=OFF \
+      -DSLIC3R_GUI=1 \n      -DSLIC3R_PCH=OFF \
       -G Ninja
     cmake --build . --target all -- -j$NIX_BUILD_CORES
     runHook postBuild
