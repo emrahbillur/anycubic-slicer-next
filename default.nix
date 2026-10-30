@@ -75,7 +75,8 @@ stdenv.mkDerivation (finalAttrs: {
       -DCMAKE_INSTALL_PREFIX="$out" \
       -DCMAKE_BUILD_TYPE=Release \
       -DSLIC3R_STATIC=1 \
-      -DSLIC3R_GUI=1 \n      -DSLIC3R_PCH=OFF \
+      -DSLIC3R_GUI=1 \
+      -DSLIC3R_PCH=OFF \
       -G Ninja
     cmake --build . --target all -- -j$NIX_BUILD_CORES
     runHook postBuild
