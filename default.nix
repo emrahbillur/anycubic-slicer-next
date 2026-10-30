@@ -57,18 +57,17 @@ stdenv.mkDerivation (finalAttrs: {
     "-DSLIC3R_PCH=OFF"
     "-DCMAKE_BUILD_TYPE=Release"
     "-DCMAKE_CXX_FLAGS=-Wno-error=return-type"
+    # Boost 1.91 component cmake config dosyaları yok,
+    # Boost_DIR ile direkt cmake dizinine göster
+    "-DBOOST_ROOT=${boost}"
+    "-DBOOST_INCLUDEDIR=${boost}/include"
+    "-DBOOST_LIBRARYDIR=${boost}/lib"
+    "-DBOOST_NO_BOOST_CMAKE=ON"
   ];
 
   preBuild = ''
     sed -i "s/+UNKNOWN/_$(date '+%F')/" version.inc || true
   '';
-
-  # Boost 1.91'in cmake config dosyaları component'leri bulamıyor.
-  # BOOST_ROOT ve Boost_NO_BOOST_CMAKE ile workaround.
-  env = {
-    BOOST_ROOT = "${boost}";
-    CMAKE_PREFIX_PATH = "${boost}";
-  };
 
   buildPhase = ''
     runHook preBuild
@@ -80,9 +79,6 @@ stdenv.mkDerivation (finalAttrs: {
       -DSLIC3R_STATIC=1 \
       -DSLIC3R_GUI=1 \
       -DSLIC3R_PCH=OFF \
-      -DBOOST_ROOT="${boost}" \
-      -DBOOST_INCLUDEDIR="${boost}/include" \
-      -DBOOST_LIBRARYDIR="${boost}/lib" \
       -G Ninja
     cmake --build . --target all -- -j$NIX_BUILD_CORES
     runHook postBuild
