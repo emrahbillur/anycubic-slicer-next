@@ -57,16 +57,28 @@ stdenv.mkDerivation (finalAttrs: {
     "-DSLIC3R_PCH=OFF"
     "-DCMAKE_BUILD_TYPE=Release"
     "-DCMAKE_CXX_FLAGS=-Wno-error=return-type"
-    # Boost 1.91 component cmake config dosyaları yok,
-    # Boost_DIR ile direkt cmake dizinine göster
-    "-DBOOST_ROOT=${boost}"
-    "-DBOOST_INCLUDEDIR=${boost}/include"
-    "-DBOOST_LIBRARYDIR=${boost}/lib"
-    "-DBOOST_NO_BOOST_CMAKE=ON"
   ];
 
   preBuild = ''
     sed -i "s/+UNKNOWN/_$(date '+%F')/" version.inc || true
+  '';
+
+  # Boost 1.91'de BoostConfig.cmake component cmake dosyalarını bulamıyor.
+  # Boost_DIR cache değişkeni ile FindBoost modülünü kullanmaya zorla.
+  cmakeFlags = [
+    "-DCMAKE_BUILD_TYPE=Release"
+    "-DSLIC3R_STATIC=1"
+    "-DSLIC3R_GUI=1"
+    "-DSLIC3R_PCH=OFF"
+    "-DCMAKE_CXX_FLAGS=-Wno-error=return-type"
+    "-DBOOST_ROOT=${boost}"
+  ];
+
+  # Boost component config dosyaları yerine FindBoost kullan
+  postConfigure = ''
+    # Boost_DIR'i cmake cache'e yazarak BoostConfig.cmake bypass et
+    echo "set(Boost_DIR \"\")" >> CMakeCache.txt
+    echo "set(Boost_NO_BOOST_CMAKE ON)" >> CMakeCache.txt
   '';
 
   buildPhase = ''
@@ -75,10 +87,8 @@ stdenv.mkDerivation (finalAttrs: {
     cd build
     cmake .. \
       -DCMAKE_INSTALL_PREFIX="$out" \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DSLIC3R_STATIC=1 \
-      -DSLIC3R_GUI=1 \
-      -DSLIC3R_PCH=OFF \
+      -DBOOST_ROOT="${boost}" \
+      -DBOOST_NO_BOOST_CMAKE=ON \
       -G Ninja
     cmake --build . --target all -- -j$NIX_BUILD_CORES
     runHook postBuild
