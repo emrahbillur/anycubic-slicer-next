@@ -51,19 +51,16 @@ stdenv.mkDerivation (finalAttrs: {
     systemdLibs
   ];
 
+  cmakeFlags = [
+    "-DCMAKE_BUILD_TYPE=Release"
+    "-DSLIC3R_STATIC=1"
+    "-DSLIC3R_GUI=1"
+    "-DSLIC3R_PCH=OFF"
+    "-DCMAKE_CXX_FLAGS=-Wno-error=return-type"
+  ];
+
   preBuild = ''
     sed -i "s/+UNKNOWN/_$(date '+%F')/" version.inc || true
-  '';
-
-  # Boost 1.91 BoostConfig.cmake component cmake dosyalarını üretmiyor.
-  # Nixpkgs boost paketindeki cmake-paths patch'leri de bu sorunu çözemedi.
-  # Çözüm: CMakeLists.txt patch ile find_package(Boost ...) yerine
-  # FindBoost modülünü kullanmaya zorla.
-  postPatch = ''
-    # Boost_CONFIG_FILE yerine FindBoost kullan
-    sed -i 's/find_package(Boost/find_package(Boost)/' CMakeLists.txt
-    # CMake cache'e BOOST_NO_BOOST_CMAKE=ON yaz
-    # Böylece BoostConfig.cmake bypass edilir
   '';
 
   buildPhase = ''
@@ -76,9 +73,6 @@ stdenv.mkDerivation (finalAttrs: {
       -DSLIC3R_STATIC=1 \
       -DSLIC3R_GUI=1 \
       -DSLIC3R_PCH=OFF \
-      -DBOOST_ROOT="${boost}" \
-      -DBUILD_SHARED_LIBS=OFF \
-      -DBoost_NO_BOOST_CMAKE=ON \
       -G Ninja
     cmake --build . --target all -- -j$NIX_BUILD_CORES
     runHook postBuild
