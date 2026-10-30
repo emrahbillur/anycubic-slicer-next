@@ -19,6 +19,7 @@
 , openvdb
 , dbus
 , wxwidgets_3_2
+, systemd-libs
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -47,6 +48,7 @@ stdenv.mkDerivation (finalAttrs: {
     openvdb
     dbus
     wxwidgets_3_2
+    systemd-libs
   ];
 
   cmakeFlags = [
@@ -59,6 +61,12 @@ stdenv.mkDerivation (finalAttrs: {
 
   preBuild = ''
     sed -i "s/+UNKNOWN/_$(date '+%F')/" version.inc || true
+  '';
+
+  # Boost component cmake config'leri CMAKE_PREFIX_PATH'te görünür olsun
+  postUnpack = ''
+    # boost lib/cmake path'ini CMAKE_PREFIX_PATH'e ekle
+    export CMAKE_PREFIX_PATH="${boost}/lib/cmake:$CMAKE_PREFIX_PATH"
   '';
 
   buildPhase = ''
