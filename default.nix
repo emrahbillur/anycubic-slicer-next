@@ -63,6 +63,12 @@ stdenv.mkDerivation (finalAttrs: {
     sed -i "s/+UNKNOWN/_$(date '+%F')/" version.inc || true
   '';
 
+  # Boost 1.91 BoostConfig.cmake component cmake dosyalarını üretmiyor.
+  # FindBoost modülünü kullanmaya zorla.
+  postPatch = ''
+    set(Boost_NO_BOOST_CMAKE ON CACHE BOOL "" FORCE)
+  '';
+
   buildPhase = ''
     runHook preBuild
     mkdir build
