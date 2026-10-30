@@ -4,7 +4,7 @@
 , ninja
 , pkg-config
 , src
-, boost1_84_0
+, boost
 , tbb
 , openssl
 , curl
@@ -33,7 +33,7 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   buildInputs = [
-    boost1_84_0
+    boost
     tbb
     openssl
     curl
