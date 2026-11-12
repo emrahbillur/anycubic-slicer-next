@@ -1,0 +1,84 @@
+--- a/src/libslic3r/GCode/PostProcessor.cpp
++++ b/src/libslic3r/GCode/PostProcessor.cpp
+@@ -149,9 +149,12 @@
+ 
+ #include <cstdlib>   // getenv()
+ #include <sstream>
++#include <boost/process/v1/child.hpp>
++#include <boost/process/v1/pipe.hpp>
++#include <boost/process/v1/io.hpp>
+ #include <boost/process.hpp>
+ 
+-namespace process = boost::process;
++namespace process = boost::process::v1;
+ 
+ static int run_script(const std::string &script, const std::string &gcode, std::string &std_err)
+ {
+
+--- a/src/slic3r/GUI/RemovableDriveManager.cpp
++++ b/src/slic3r/GUI/RemovableDriveManager.cpp
+@@ -22,6 +22,9 @@
+ #include <pwd.h>
+ #include <boost/filesystem.hpp>
+ #include <boost/system/error_code.hpp>
++#include <boost/process/v1/child.hpp>
++#include <boost/process/v1/pipe.hpp>
++#include <boost/process/v1/io.hpp>
+ #include <boost/process.hpp>
+ #endif
+ 
+@@ -302,8 +305,8 @@
+ 		// but neither triggers "succesful safe removal messege"
+ 		
+ 		BOOST_LOG_TRIVIAL(info) << "Ejecting started";
+-		boost::process::ipstream istd_err;
+-    	boost::process::child child(
++		boost::process::v1::ipstream istd_err;
++    	boost::process::v1::child child(
+ #if __APPLE__		
+ 			boost::process::search_path("diskutil"), "eject", correct_path.c_str(), (boost::process::std_out & boost::process::std_err) > istd_err);
+ 		//Another option how to eject at mac. Currently not working.
+@@ -324,7 +327,7 @@
+             // The wait call can fail
+             // It can happen even in cases where the eject is sucessful, but better report it as failed.
+             // We did not find a way to reliably retrieve the exit code of the process.
+-			BOOST_LOG_TRIVIAL(error) << "boost::process::child::wait() failed during Ejection. State of Ejection is unknown. Error code: " << ec.value();
++			BOOST_LOG_TRIVIAL(error) << "boost::process::v1::child::wait() failed during Ejection. State of Ejection is unknown. Error code: " << ec.value();
+ 		} else {
+ 			int err = child.exit_code();
+ 	    	if (err) {
+
+--- a/src/slic3r/GUI/MediaPlayCtrl.cpp
++++ b/src/slic3r/GUI/MediaPlayCtrl.cpp
+@@ -13,6 +13,9 @@
+ #include <boost/nowide/cstdio.hpp>
+ #include <boost/nowide/utf8_codecvt.hpp>
+ #undef pid_t
++#include <boost/process/v1/child.hpp>
++#include <boost/process/v1/pipe.hpp>
++#include <boost/process/v1/io.hpp>
+ #include <boost/process.hpp>
+ #ifdef __WIN32__
+ #include <boost/process/windows.hpp>
+@@ -759,17 +762,17 @@
+             if (!boost::filesystem::exists(file_dll) || boost::filesystem::last_write_time(file_dll) != boost::filesystem::last_write_time(file_dll2))
+                 boost::filesystem::copy_file(file_dll2, file_dll, boost::filesystem::copy_option::overwrite_if_exists);
+         }
+-        boost::process::child process_source(file_source, file_url2.ToStdWstring(), boost::process::start_dir(tools_dir), 
++        boost::process::v1::child process_source(file_source, file_url2.ToStdWstring(), boost::process::start_dir(tools_dir), 
+                                              boost::process::windows::create_no_window, 
+                                              boost::process::std_out > intermediate, boost::process::limit_handles);
+-        boost::process::child process_ffmpeg(file_ffmpeg, configss, boost::process::windows::create_no_window, 
++        boost::process::v1::child process_ffmpeg(file_ffmpeg, configss, boost::process::windows::create_no_window, 
+                                              boost::process::std_in < intermediate, boost::process::limit_handles);
+ #else
+         boost::filesystem::permissions(file_source, boost::filesystem::owner_exe | boost::filesystem::add_perms);
+         boost::filesystem::permissions(file_ffmpeg, boost::filesystem::owner_exe | boost::filesystem::add_perms);
+-        boost::process::child process_source(file_source, file_url2.data().AsInternal(), boost::process::start_dir(start_dir), 
++        boost::process::v1::child process_source(file_source, file_url2.data().AsInternal(), boost::process::start_dir(start_dir), 
+                                              boost::process::std_out > intermediate, boost::process::limit_handles);
+-        boost::process::child process_ffmpeg(file_ffmpeg, configss, boost::process::std_in < intermediate, boost::process::limit_handles);
++        boost::process::v1::child process_ffmpeg(file_ffmpeg, configss, boost::process::std_in < intermediate, boost::process::limit_handles);
+ #endif
+         process_source.detach();
+         process_ffmpeg.detach();

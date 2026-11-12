@@ -1,0 +1,127 @@
+--- a/src/slic3r/Config/Version.cpp
++++ b/src/slic3r/Config/Version.cpp
+@@ -3,6 +3,7 @@
+ #include <cctype>
+ 
+ #include <boost/filesystem/operations.hpp>
++#include <filesystem>
+ #include <boost/nowide/fstream.hpp>
+ 
+ #include "libslic3r/libslic3r.h"
+@@ -306,12 +307,12 @@
+ 
+ std::vector<Index> Index::load_db()
+ {
+-    boost::filesystem::path cache_dir = boost::filesystem::path(Slic3r::data_dir()) / "ota";
++    std::filesystem::path cache_dir = std::filesystem::path(Slic3r::data_dir()) / "ota";
+ 
+     std::vector<Index> index_db;
+     std::string errors_cummulative;
+-	for (auto &dir_entry : boost::filesystem::directory_iterator(cache_dir))
+-        if (Slic3r::is_idx_file(dir_entry)) {
++	for (const auto &dir_entry : std::filesystem::directory_iterator(cache_dir))
++        if (Slic3r::is_idx_file(dir_entry.path())) {
+         	Index idx;
+             try {
+             	idx.load(dir_entry.path());
+
+--- a/src/libslic3r/utils.cpp
++++ b/src/libslic3r/utils.cpp
+@@ -970,6 +970,12 @@
+ 	return is_plain_file(dir_entry) && strcasecmp(dir_entry.path().extension().string().c_str(), ".idx") == 0;
+ }
+ 
++bool is_idx_file(const std::filesystem::path &p)
++{
++	return std::filesystem::is_regular_file(p)
++		&& strcasecmp(p.extension().string().c_str(), ".idx") == 0;
++}
++
+ //BBS: refine gcode appendix
+ bool is_gcode_file(const std::string &path)
+ {
+
+--- a/src/libslic3r/Utils.hpp
++++ b/src/libslic3r/Utils.hpp
+@@ -208,6 +208,7 @@
+ extern bool is_plain_file(const boost::filesystem::directory_entry &path);
+ extern bool is_ini_file(const boost::filesystem::directory_entry &path);
+ extern bool is_idx_file(const boost::filesystem::directory_entry &path);
++extern bool is_idx_file(const std::filesystem::path &path);
+ extern bool is_gcode_file(const std::string &path);
+ extern bool is_img_file(const std::string& path);
+ extern bool is_gallery_file(const boost::filesystem::directory_entry& path, char const* type);
+
+--- a/src/slic3r/GUI/HttpServer.hpp
++++ b/src/slic3r/GUI/HttpServer.hpp
+@@ -115,7 +115,7 @@
+     {
+     public:
+         HttpServer&                        server;
+-        boost::asio::io_service            io_service;
++        boost::asio::io_context            io_service;
+         boost::asio::ip::tcp::acceptor     acceptor;
+         std::set<std::shared_ptr<session>> sessions;
+ 
+
+--- a/src/slic3r/Utils/Bonjour.hpp
++++ b/src/slic3r/Utils/Bonjour.hpp
+@@ -151,11 +151,11 @@
+ 	UdpSocket(Bonjour::ReplyFn replyfn
+ 		, const boost::asio::ip::address& multicast_address
+ 		, const boost::asio::ip::address& interface_address
+-		, std::shared_ptr< boost::asio::io_service > io_service);
++		, std::shared_ptr< boost::asio::io_context > io_service);
+ 
+ 	UdpSocket(Bonjour::ReplyFn replyfn
+ 		, const boost::asio::ip::address& multicast_address
+-		, std::shared_ptr< boost::asio::io_service > io_service);
++		, std::shared_ptr< boost::asio::io_context > io_service);
+ 
+ 	void send();
+ 	void async_receive();
+@@ -168,7 +168,7 @@
+ 	boost::asio::ip::address					    multicast_address;
+ 	boost::asio::ip::udp::socket					socket;
+ 	boost::asio::ip::udp::endpoint					mcast_endpoint;
+-	std::shared_ptr< boost::asio::io_service >	io_service;
++	std::shared_ptr< boost::asio::io_context >	io_service;
+ 	std::vector<BonjourRequest>						requests;
+ };
+ 
+@@ -182,7 +182,7 @@
+ 		, Bonjour::ReplyFn replyfn
+ 		, const boost::asio::ip::address& multicast_address
+ 		, const boost::asio::ip::address& interface_address
+-		, std::shared_ptr< boost::asio::io_service > io_service)
++		, std::shared_ptr< boost::asio::io_context > io_service)
+ 		: UdpSocket(replyfn, multicast_address, interface_address, io_service)
+ 		, txt_keys(txt_keys)
+ 		, service(service)
+@@ -199,7 +199,7 @@
+ 		, std::string protocol
+ 		, Bonjour::ReplyFn replyfn
+ 		, const boost::asio::ip::address& multicast_address
+-		, std::shared_ptr< boost::asio::io_service > io_service)
++		, std::shared_ptr< boost::asio::io_context > io_service)
+ 		: UdpSocket(replyfn, multicast_address, io_service)
+ 		, txt_keys(txt_keys)
+ 		, service(service)
+@@ -237,7 +237,7 @@
+ 		, Bonjour::ReplyFn replyfn
+ 		, const boost::asio::ip::address& multicast_address
+ 		, const boost::asio::ip::address& interface_address
+-		, std::shared_ptr< boost::asio::io_service > io_service)
++		, std::shared_ptr< boost::asio::io_context > io_service)
+ 		: UdpSocket(replyfn, multicast_address, interface_address, io_service)
+ 		, hostname(hostname)
+ 
+@@ -249,7 +249,7 @@
+ 	ResolveSocket(const std::string& hostname
+ 		, Bonjour::ReplyFn replyfn
+ 		, const boost::asio::ip::address& multicast_address
+-		, std::shared_ptr< boost::asio::io_service > io_service)
++		, std::shared_ptr< boost::asio::io_context > io_service)
+ 		: UdpSocket(replyfn, multicast_address, io_service)
+ 		, hostname(hostname)
+ 

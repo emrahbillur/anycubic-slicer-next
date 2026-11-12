@@ -12,11 +12,16 @@
       };
 
       anycubic-slicer-next = pkgs.callPackage ./default.nix {
+        cgal = pkgs.cgal_5;
         src = pkgs.fetchFromGitHub {
           owner = "ANYCUBIC-3D";
           repo = "AnycubicSlicerNext";
           rev = "6103ed8b511609658d00d0538cc7f0609cdb57da";
-          hash = "sha256-SENİN-HASHIN";
+          hash = "sha256-0kXjIoinNvpkHZ54qlTkQtk9DmMMJ27nr+nCjHKH7uk=";
+        };
+        libnoiseSrc = pkgs.fetchzip {
+          url = "https://github.com/SoftFever/Orca-deps-libnoise/archive/refs/tags/1.0.zip";
+          hash = "sha256-nzvtWsYz4REVcPRpKysOPOYIlMNhfbDHTkyS7PKvY+c=";
         };
       };
     in {
