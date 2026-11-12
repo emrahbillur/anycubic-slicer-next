@@ -189,6 +189,37 @@ stdenv.mkDerivation (finalAttrs: {
     substituteInPlace src/slic3r/GUI/Widgets/DropDown.cpp \
       --replace-fail 'auto size2 = GetBmpSize(icon);' \
                      'auto size2 = icon.IsOk() ? GetBmpSize(icon) : wxSize(0, 0);'
+    # wxGTK asserts if a static bitmap is measured before it receives a real
+    # bitmap. The device status panel creates these controls before printer
+    # status arrives, so seed them with their normal/offline artwork.
+    substituteInPlace src/slic3r/GUI/StatusPanel.cpp \
+      --replace-fail 'm_bitmap_sdcard_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap' \
+                     'm_bitmap_sdcard_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, m_bitmap_sdcard_state_no.bmp()' \
+      --replace-fail 'm_bitmap_timelapse_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap' \
+                     'm_bitmap_timelapse_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, m_bitmap_timelapse_off.bmp()' \
+      --replace-fail 'm_bitmap_recording_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap' \
+                     'm_bitmap_recording_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, m_bitmap_recording_off.bmp()' \
+      --replace-fail 'm_bitmap_vcamera_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap' \
+                     'm_bitmap_vcamera_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, m_bitmap_vcamera_off.bmp()' \
+      --replace-fail 'm_camera_switch_button = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap' \
+                     'm_camera_switch_button = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, m_bitmap_switch_camera.bmp()'
+    substituteInPlace src/slic3r/GUI/NetworkTestDialog.cpp \
+      --replace-fail 'wxString::Format("%s:", buf.str())' \
+                     'wxString::Format("%s:", wxString::FromUTF8(buf.str()))' \
+      --replace-fail 'wxString::Format("test %s ip resolved = %s", name, ip)' \
+                     'wxString::Format("test %s ip resolved = %s", name, wxString::FromUTF8(ip))' \
+      --replace-fail 'wxString::Format("status=%u, body=%s, error=%s", status, body, error)' \
+                     'wxString::Format("status=%u, body=%s, error=%s", status, wxString::FromUTF8(body), wxString::FromUTF8(error))'
+    # This status message has no format placeholders; passing closeCount makes
+    # wxArgNormalizer raise an assertion after a successful IP connection.
+    substituteInPlace src/slic3r/GUI/ReleaseNote.cpp \
+      --replace-fail 'wxString::Format(_L("Connecting to printer... The dialog will close later"), closeCount)' \
+                     '_L("Connecting to printer... The dialog will close later")'
+    substituteInPlace src/slic3r/GUI/DeviceTab/uiDeviceUpdateVersion.cpp \
+      --replace-fail 'm_dev_upgrade_indicator = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(5), FromDIP(5)));' \
+                     'm_dev_upgrade_indicator = new wxStaticBitmap(this, wxID_ANY, ScalableBitmap(this, "monitor_upgrade_online", 5).bmp(), wxDefaultPosition, wxSize(FromDIP(5), FromDIP(5)));'
+    sed -i '/m_dev_upgrade_indicator->SetBitmap(ScalableBitmap(this, "monitor_upgrade_online", 5).bmp());/d' \
+      src/slic3r/GUI/DeviceTab/uiDeviceUpdateVersion.cpp
     # WebKitGTK shares a URI-scheme registry across WebViews. Keep the custom
     # scheme handlers alive and register them once instead of once per view.
     substituteInPlace src/slic3r/GUI/Widgets/WebView.cpp \
