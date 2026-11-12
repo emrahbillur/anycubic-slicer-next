@@ -163,6 +163,18 @@ stdenv.mkDerivation (finalAttrs: {
       src/slic3r/GUI/Widgets/WebView.cpp
     sed -i '/webView->EnableContextMenu(true);/i\
         });' src/slic3r/GUI/Widgets/WebView.cpp
+    # The bitmap helpers accept a null window, but dereference it directly.
+    # em_unit() already handles nullptr by using the app-wide scale.
+    substituteInPlace src/slic3r/GUI/wxExtensions.cpp \
+      --replace-fail 'unsigned int height = (unsigned int) (win->FromDIP(px_cnt) + 0.5f);' \
+                     'unsigned int height = (unsigned int) (px_cnt * em_unit(win) / 10.0f + 0.5f);' \
+      --replace-fail 'resize ? win->FromDIP(10) * 0.1f : 0.f' \
+                     'resize ? em_unit(win) * 0.1f : 0.f' \
+      --replace-fail 'unsigned int height = (unsigned int)(win->FromDIP(px_cnt) + 0.5f);' \
+                     'unsigned int height = (unsigned int)(px_cnt * em_unit(win) / 10.0f + 0.5f);'
+    substituteInPlace src/slic3r/GUI/BBLTopbar.cpp \
+      --replace-fail 'item.GetDisabledBitmap()' 'item.GetDisabledBitmapFor(wnd)' \
+      --replace-fail 'item.GetBitmap();' 'item.GetBitmapFor(wnd);'
     # OCCT 7.9 consolidated the legacy STEP libraries into TKDESTEP, and
     # nixpkgs builds OpenCV as component libraries rather than opencv_world.
     substituteInPlace src/libslic3r/CMakeLists.txt \
@@ -297,7 +309,8 @@ stdenv.mkDerivation (finalAttrs: {
 
   postFixup = ''
     wrapProgram "$out/bin/AnycubicSlicerNext" \
-      --set WXSUPPRESS_SIZER_FLAGS_CHECK 1
+      --set WXSUPPRESS_SIZER_FLAGS_CHECK 1 \
+      --unset GTK_PATH
     ln -s AnycubicSlicerNext "$out/bin/orca-slicer"
     install -Dm644 "$out/resources/images/AnycubicSlicer.png" \
       "$out/share/icons/hicolor/256x256/apps/AnycubicSlicer.png"
