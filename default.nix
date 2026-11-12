@@ -5,6 +5,7 @@
 , pkg-config
 , makeWrapper
 , wrapGAppsHook3
+, gettext
 , src
 , libnoiseSrc
 , boost
@@ -52,6 +53,7 @@ stdenv.mkDerivation (finalAttrs: {
     pkg-config
     makeWrapper
     wrapGAppsHook3
+    gettext
   ];
 
   buildInputs = [
@@ -101,6 +103,15 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   postPatch = ''
+    # The upstream gettext target is not part of the default build, so create
+    # the catalogs explicitly before CMake installs the resources tree.
+    for po_file in localization/i18n/*/OrcaSlicer*.po; do
+      locale="''${po_file%/*}"
+      locale="''${locale##*/}"
+      mkdir -p "resources/i18n/$locale"
+      msgfmt --check-format -o "resources/i18n/$locale/OrcaSlicer.mo" "$po_file"
+    done
+
     # Utils.hpp declares std::filesystem::path but does not include its header.
     sed -i '1i#include <filesystem>' src/libslic3r/Utils.hpp
     # Boost 1.91 keeps the index loader on boost::filesystem::path while this
@@ -175,6 +186,14 @@ stdenv.mkDerivation (finalAttrs: {
     substituteInPlace src/slic3r/GUI/BBLTopbar.cpp \
       --replace-fail 'item.GetDisabledBitmap()' 'item.GetDisabledBitmapFor(wnd)' \
       --replace-fail 'item.GetBitmap();' 'item.GetBitmapFor(wnd);'
+    substituteInPlace src/slic3r/GUI/Widgets/DropDown.cpp \
+      --replace-fail 'auto size2 = GetBmpSize(icon);' \
+                     'auto size2 = icon.IsOk() ? GetBmpSize(icon) : wxSize(0, 0);'
+    # WebKitGTK shares a URI-scheme registry across WebViews. Keep the custom
+    # scheme handlers alive and register them once instead of once per view.
+    substituteInPlace src/slic3r/GUI/Widgets/WebView.cpp \
+      --replace-fail $'        // With WKWebView handlers need to be registered before creation\n        webView->RegisterHandler(wxSharedPtr<wxWebViewHandler>(new wxWebViewArchiveHandler("wxfs")));\n        // And the memory: file system\n        webView->RegisterHandler(wxSharedPtr<wxWebViewHandler>(new wxWebViewFSHandler("memory")));' \
+                     $'        // WebKitGTK shares these schemes across all WebViews.\n#ifdef __WXGTK__\n        static wxSharedPtr<wxWebViewHandler> wxfs_handler;\n        static wxSharedPtr<wxWebViewHandler> memory_handler;\n        if (!wxfs_handler) {\n            wxfs_handler = wxSharedPtr<wxWebViewHandler>(new wxWebViewArchiveHandler("wxfs"));\n            memory_handler = wxSharedPtr<wxWebViewHandler>(new wxWebViewFSHandler("memory"));\n            webView->RegisterHandler(wxfs_handler);\n            webView->RegisterHandler(memory_handler);\n        }\n#else\n        webView->RegisterHandler(wxSharedPtr<wxWebViewHandler>(new wxWebViewArchiveHandler("wxfs")));\n        webView->RegisterHandler(wxSharedPtr<wxWebViewHandler>(new wxWebViewFSHandler("memory")));\n#endif'
     # OCCT 7.9 consolidated the legacy STEP libraries into TKDESTEP, and
     # nixpkgs builds OpenCV as component libraries rather than opencv_world.
     substituteInPlace src/libslic3r/CMakeLists.txt \
