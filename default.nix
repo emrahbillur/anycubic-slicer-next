@@ -109,6 +109,13 @@ stdenv.mkDerivation (finalAttrs: {
   postPatch = ''
     cp -r ${openPluginsSrc} open-plugins
     chmod -R u+w open-plugins
+
+    # The upstream Anycubic plugin manager currently reports HasPlugin() as
+    # false and StartDownloadPlugins() is a TODO stub. Hide its home-page
+    # install banner in this package so users are not sent to a dead action.
+    printf '\n/* Plugin installation is not implemented by upstream yet. */\n#NoPluginTip { display: none !important; }\n' \
+      >> resources/web/homepage/css/home.css
+
     mkdir -p open-plugins/WebView/include/webview
     ln -s ../webview.h open-plugins/WebView/include/webview/webview.h
     ln -s ../webviewarchivehandler.h open-plugins/WebView/include/webview/webviewarchivehandler.h
